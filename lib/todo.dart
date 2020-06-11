@@ -1,18 +1,22 @@
 class Todo {
 
   int id;
-  final String title;
-  final String description;
-  final String date;
+  int status;
+  String title;
+  String description;
+  String date;
 
-  Todo(this.title, this.description, this.date);
+  Todo();
 
   factory Todo.fromMap(Map<String, dynamic> data) {
-    return Todo(
-      data['title'],
-      data['description'],
-      data['date']
-    );
+    Todo todo = new Todo();
+    todo.id = data['id'];
+    todo.status = data['status'];
+    todo.title = data['title'];
+    todo.description = data['description'];
+    todo.date = data['date'];
+
+    return todo;
   }
 
   Map<String, dynamic> toMap() {
@@ -20,6 +24,7 @@ class Todo {
       "title": title,
       "description": description,
       "date": date,
+      "status": status,
     };
   }
 }

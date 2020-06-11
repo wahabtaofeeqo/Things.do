@@ -3,114 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mytodo/account.dart';
 import 'package:mytodo/consts.dart';
 import 'package:mytodo/database.dart';
-import 'package:mytodo/home.dart';
-
-class FormDialog extends StatefulWidget {
-
-  @override
-  State<StatefulWidget> createState() {
-    return _FormDialogState();
-  }
-}
-
-class _FormDialogState extends State<FormDialog> {
-
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("New Todo"),),
-      body: Center(
-        child: Padding(
-          padding: EdgeInsets.all(10),
-          child: Card(
-            child: _form(context),
-          ),
-        )
-      )
-    );
-  }
-
-  Widget _form(BuildContext context) {
-    return Form(
-      child: ListView(
-        shrinkWrap: true,
-        padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 5.0),
-        children: <Widget>[
-          Container(
-
-            margin: EdgeInsets.only(bottom: 16.0),
-            decoration: BoxDecoration(
-              color: Colors.tealAccent,
-              borderRadius: BorderRadius.circular(32)
-            ),
-
-            child: TextFormField(
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                hintText: "Todo Title",
-                suffixIcon: Icon(Icons.print),
-                contentPadding: EdgeInsets.all(16)
-              ),
-            ),
-          ),
-
-          Container(
-            margin: EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(32)
-            ),
-
-            child: TextFormField(
-              decoration: InputDecoration(
-                 labelText: "Enter Description",
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(5),
-                  borderSide: BorderSide(),
-                ),
-              ),
-
-              keyboardType: TextInputType.multiline,
-              minLines: 1,
-              maxLines: null,
-            ),
-          ),
-
-          Container(
-            margin: EdgeInsets.only(bottom: 16.0),
-            child: TextFormField(
-              decoration: InputDecoration(
-                labelText: "Enter Demo",
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(5),
-                  borderSide: BorderSide(),
-                ),
-              ),
-              maxLines: null,
-              minLines: 5,
-            ),
-          ),
-
-          Align(
-
-            alignment: Alignment.bottomRight,
-            child: RaisedButton(
-              padding: EdgeInsets.fromLTRB(25, 16, 25, 16),
-              child: Text("Save", style: TextStyle(color: Colors.white),),
-              color: Colors.red,
-              onPressed: () {},
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(5),
-              ),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-}
+import 'package:mytodo/utils.dart';
 
 // EmailDialog Widget
 class EmailDialogWidget extends StatefulWidget {
@@ -255,12 +148,15 @@ class _EmailDialogWidgetState extends State<EmailDialogWidget> {
 
     bool res = await _dataManager.checkEmail(email);
     if(res) {
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(); // Close the dialog
       Navigator.of(context).push(MaterialPageRoute<void>(
           builder: (BuildContext context) {
             return SignUp(email: email);
           }
       ));
+    }
+    else {
+      Utils.showMessage("The Email has already been used.", context);
     }
   }
 }

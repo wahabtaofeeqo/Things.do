@@ -3,8 +3,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 class SessionManager {
   static SessionManager instance;
   static String firstTime = "firstTime";
-  static Future<SharedPreferences> preference = SharedPreferences.getInstance();
+  static final email = "email";
 
+  static Future<SharedPreferences> preference = SharedPreferences.getInstance();
   SessionManager._();
 
   static SessionManager getInstance() {
@@ -28,4 +29,15 @@ class SessionManager {
     final SharedPreferences prefs = await preference;
     prefs.setBool(firstTime, val);
   }
+
+  setEmail(String value) async {
+    final SharedPreferences sp = await preference;
+    sp.setString(email, value);
+  }
+
+  Future<String> getEmail() async {
+    final SharedPreferences sp = await preference;
+    return (sp.getString(email) ?? null);
+  }
+
 }
