@@ -40,4 +40,8 @@ class SessionManager {
     return (sp.getString(email) ?? null);
   }
 
+  clearEmail() async {
+    final pref = await preference;
+    return pref.remove(email);
+  }
 }

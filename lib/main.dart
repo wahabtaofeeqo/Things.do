@@ -7,19 +7,23 @@ import 'package:mytodo/home.dart';
 import 'package:mytodo/welcome.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'data/session.dart';
+
 
 final _dataManager = DataManager.getInstance();
 
 void main() {
-  runApp(DevicePreview(builder: (context) => MyApp(), enabled: !kReleaseMode,));
+  //runApp(DevicePreview(builder: (context) => MyApp(), enabled: !kReleaseMode,));
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      locale: DevicePreview.of(context).locale,
-      builder: DevicePreview.appBuilder,
+      debugShowCheckedModeBanner: false,
+      //locale: DevicePreview.of(context).locale,
+      //builder: DevicePreview.appBuilder,
       theme: ThemeData(
           primarySwatch: Colors.blue,
           textTheme: TextTheme(
@@ -42,20 +46,23 @@ class MainView extends StatefulWidget {
 class _MainViewState extends State<MainView> {
 
   bool checked = false;
-  bool registered;
-
-  static const platform = const MethodChannel("com.taocoder.todo/alarm");
+  bool registered = false;
+  final _session = SessionManager.getInstance();
+  static const channelAlarm = const MethodChannel("com.taocoder.todo/alarm");
 
   @override
   void initState() {
-
-  _dataManager.hasRegister().then((val) {
-    checked = true;
-    registered = val;
-    setState(() {});
-  });
-
     super.initState();
+    initApp();
+  }
+
+  initApp() {
+    _dataManager.hasRegister().then((res) {
+      setState(() {
+        checked = true;
+        registered = res;
+      });
+    });
   }
 
   @override
@@ -68,8 +75,12 @@ class _MainViewState extends State<MainView> {
         decoration: BoxDecoration(
           color: Colors.white
         ),
-        child: Center(child: CircularProgressIndicator(),),
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
       );
     }
   }
 }
+
+//Todo 1: Create Notification on platform notice

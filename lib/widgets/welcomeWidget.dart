@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import '../account.dart';
+import 'package:mytodo/data/firebase_records.dart';
+import 'package:mytodo/home.dart';
+import 'package:mytodo/layouts/login_screen.dart';
+import '../register.dart';
 import '../database.dart';
 import '../dialog.dart';
-import '../home.dart';
-import '../session.dart';
+import '../data/session.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 
 import '../utils.dart';
 
-class WelcomeWidget extends StatelessWidget {
 
-  final manager = SessionManager.getInstance();
-  final _dataManager = DataManager.getInstance();
+class WelcomeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
@@ -178,23 +178,6 @@ class WelcomeWidget extends StatelessWidget {
                 style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.black26),
               ),
             ),
-
-            Padding(
-              padding: EdgeInsets.only(bottom: 10),
-              child: FlatButton(
-                child: Text("Continue", style: TextStyle(color: Colors.deepOrange),),
-                onPressed: () async {
-                  var res = await _dataManager.hasRegister();
-                  if(res) {
-                    Navigator.of(context).push(MaterialPageRoute<void> (
-                        builder: (context) {
-                          return HomePage(title: "Home",);
-                        }
-                    ));
-                  }
-                },
-              ),
-            ),
           ],
         )
       ],
@@ -202,12 +185,12 @@ class WelcomeWidget extends StatelessWidget {
   }
 }
 
-
 // The WelcomeScene ButtonSection
 class ButtonSection extends StatelessWidget {
 
   final String created = "Account has already been created";
   final _dataManager = DataManager.getInstance();
+  final _firebase = FirebaseRecords();
 
   final GoogleSignIn _googleSignIn = new GoogleSignIn(scopes: ['email']);
   final facebookLogin = new FacebookLogin();
@@ -343,14 +326,7 @@ class ButtonSection extends StatelessWidget {
             ),
           ),
           onPressed: () async {
-
-            var res = await _dataManager.hasRegister();
-            if(res) {
-              Utils.showMessage(created, context);
-            }
-            else {
-              showDialog(context: context, builder: (context) => EmailDialogWidget());
-            }
+            showDialog(context: context, builder: (context) => EmailDialogWidget());
           },
         )
     );
@@ -359,9 +335,8 @@ class ButtonSection extends StatelessWidget {
   _googleLogin(BuildContext context) async {
     try {
       await _googleSignIn.signIn();
-      bool res = await _dataManager.checkEmail(_googleSignIn.currentUser.email);
+      bool res = await _firebase.emailExists(_googleSignIn.currentUser.email);
       if(res) {
-        //TODO:: save to firebase
         Navigator.of(context).push(MaterialPageRoute<void>(
             builder: (BuildContext context) {
               return SignUp(email: _googleSignIn.currentUser.email);
@@ -369,12 +344,10 @@ class ButtonSection extends StatelessWidget {
         ));
       }
       else {
-        print("Email Exist");
+        Utils.showMessage("The Email has already been used.", context);
       }
     }
-    catch(err) {
-      print("Cancled");
-    }
+    catch(err) {}
   }
 
   void _facebookLogin() async {
@@ -393,8 +366,6 @@ class ButtonSection extends StatelessWidget {
           break;
       }
     }
-    catch(err) {
-      print(err);
-    }
+    catch(err) {}
   }
 }

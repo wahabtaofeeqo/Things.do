@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:mytodo/data/firebase_records.dart';
 import 'package:mytodo/database.dart';
 import 'package:mytodo/home.dart';
-import 'package:mytodo/session.dart';
+import 'package:mytodo/data/session.dart';
 import 'package:mytodo/user.dart';
+import 'package:mytodo/utils.dart';
 
 class SignUp extends StatelessWidget {
 
@@ -43,6 +45,8 @@ class _SignUpWidgetState extends State<SignUpWidget> {
   var _emailController = new TextEditingController();
   var _nameController  = new TextEditingController();
   var _passController  = new TextEditingController();
+
+  final _firebase = FirebaseRecords();
   bool _toggle = true;
 
   @override
@@ -88,7 +92,6 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                 },
               ),
             ),
-
             Container(
               margin: EdgeInsets.only(bottom: 16.0),
               child: TextFormField(
@@ -157,18 +160,45 @@ class _SignUpWidgetState extends State<SignUpWidget> {
     return (val.isEmpty) ? "Enter valid data" : null;
   }
 
-  _saveUser() {
-    var user = new User(name: _nameController.text, email: _emailController.text, password: _passController.text);
-    widget._manager.saveUser(user);
-    widget._session.setIsFirstTime(false);
+  Future<Null> _submitDialog(BuildContext context) async {
+    return await showDialog<Null>(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return SimpleDialog(
+            elevation: 0.0,
+            backgroundColor: Colors.transparent,
+            children: <Widget>[
+              Center(
+                child: CircularProgressIndicator(),
+              )
+            ],
+          );
+        });
+  }
 
-    Navigator.popUntil(context, ModalRoute.withName("/")); // Back to the WelcomeScene
-    Navigator.of(context).pushReplacement(
-        MaterialPageRoute<void>(
-            builder: (BuildContext context) {
-              return HomePage(title: "Home",);
-            }
-        )
-    );
+  _saveUser() async {
+
+    _submitDialog(context);
+    var user = new User(name: _nameController.text, email: _emailController.text, password: _passController.text);
+
+    await widget._manager.saveUser(user);
+    await widget._session.setEmail(_emailController.text.trim());
+    bool res = await _firebase.addUser(user, _emailController.text.trim());
+
+    if(res) {
+      Utils.showMessage("Account created Successfully", context);
+
+      Navigator.popUntil(context, ModalRoute.withName("/")); // Back to the WelcomeScene
+      Navigator.of(context).pushReplacement(
+          MaterialPageRoute<void>(
+              builder: (BuildContext context) => HomePage(title: "Home",)
+          )
+      );
+    }
+    else {
+      Utils.showMessage("Account not created. please try again", context);
+      Navigator.of(context).pop();
+    }
   }
 }

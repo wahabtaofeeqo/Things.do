@@ -25,6 +25,7 @@ class Todo {
       "description": description,
       "date": date,
       "status": status,
+      "created": DateTime.now()
     };
   }
 }

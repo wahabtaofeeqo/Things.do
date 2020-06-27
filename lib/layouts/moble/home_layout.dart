@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mytodo/addTask.dart';
+import 'package:mytodo/data/firebase_records.dart';
 import 'package:mytodo/database.dart';
+import 'package:mytodo/user.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../todo.dart';
@@ -18,18 +21,20 @@ class _HomeLayoutState extends State<HomeLayout> with TickerProviderStateMixin {
   final _dataManager = DataManager.getInstance();
 
   var _date;
-  var _active = "All";
   var _currentTab = "All";
+  var _active = "All";
 
   Future<List<Todo>> _futureTodo;
 
   CalendarController _calendarController;
   AnimationController _animationController;
 
-  GlobalKey<ScaffoldState> _state = new GlobalKey<ScaffoldState>();
+  static const channelAlarm = const MethodChannel("com.taocoder.todo/alarm");
 
   @override
   void initState() {
+
+    super.initState();
 
     // Calendar
     _calendarController = CalendarController();
@@ -44,7 +49,13 @@ class _HomeLayoutState extends State<HomeLayout> with TickerProviderStateMixin {
 
     _populate();
 
-    super.initState();
+    channelAlarm.setMethodCallHandler((call) => _handler(call));
+  }
+
+  _handler(MethodCall call) {
+    if(call.method == "taskToday") {
+      print("Things today b");
+    }
   }
 
   @override
@@ -80,6 +91,15 @@ class _HomeLayoutState extends State<HomeLayout> with TickerProviderStateMixin {
         available = false;
       }
     }
+    else if(status != null) {
+      temp = _dataManager.tasksWithStatus(status);
+      if((await temp).length > 0) {
+        _futureTodo = temp;
+      }
+      else {
+        available = false;
+      }
+    }
     else { // Default (All the Todos)
       _futureTodo = _dataManager.todos();
     }
@@ -90,7 +110,11 @@ class _HomeLayoutState extends State<HomeLayout> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        title: Text("Things to do"),
+        centerTitle: true,
+        leading: Icon(Icons.title,),
+      ),
       body: Container(
         child: FutureBuilder<List> (
           future: _futureTodo,
@@ -98,7 +122,7 @@ class _HomeLayoutState extends State<HomeLayout> with TickerProviderStateMixin {
             if(snapshot.hasError) Utils.showMessage(snapshot.error.toString(), context);
             if(snapshot.hasData) {
               List data = snapshot.data;
-              if(data.length == 0) return Container();
+              if(data.length == 0) return Center(child: Text("Your List of Things is Empty", style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold),),);
               else return ListView.builder(
                 itemCount: data.length,
                 itemBuilder: (context, i) {
@@ -129,12 +153,7 @@ class _HomeLayoutState extends State<HomeLayout> with TickerProviderStateMixin {
           builder: (context) => AddTaskPage()
         ));
       },),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        bottomNavigationBar: BottomAppBar(
-          child: Container(
-            height: 50.0,
-          ),
-        ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
@@ -161,15 +180,8 @@ class _HomeLayoutState extends State<HomeLayout> with TickerProviderStateMixin {
       ),
       onPressed: () async {
 
-        // To determine weather the active/completed
-        // was previously clicked
-        bool flag = false;
-
         // Title of the button
         _active = title;
-
-        // temporary result for status button selected/clicked
-        Future<List<Todo>> tempFuture;
 
         switch(title) {
 
@@ -185,21 +197,21 @@ class _HomeLayoutState extends State<HomeLayout> with TickerProviderStateMixin {
 
             if(!identical(_currentTab, _active)) {
               _currentTab = title;
-              _populate(_date, 0);
+              await _populate(null, 0);
             }
             break;
 
           case "Completed":
             if(!identical(_currentTab, _active)) {
               _currentTab = title;
-              _populate(_date, 1);
+              await _populate(null, 1);
             }
             break;
 
           case "This Day":
             if(!identical(_currentTab, _active)) {
               _currentTab = title;
-              _populate(_date);
+              await _populate(_date);
             }
             break;
 
@@ -437,7 +449,7 @@ class _HomeLayoutState extends State<HomeLayout> with TickerProviderStateMixin {
             child: ListTile(
               title: Text(todo.date),
               trailing: Switch(
-                value: false,
+                value: true,
                 onChanged: (val) {},
               ),
             ),
@@ -460,7 +472,7 @@ class _HomeLayoutState extends State<HomeLayout> with TickerProviderStateMixin {
 
   Widget _buildButton(Todo todo) {
     return Positioned(
-      bottom: 2,
+      bottom: 10,
       left: 0,
       right: 0,
       child: RaisedButton(

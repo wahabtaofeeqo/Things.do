@@ -27,8 +27,6 @@ class _HomeLayoutTabletState extends State<HomeLayoutTablet> with TickerProvider
   CalendarController _calendarController;
   AnimationController _animationController;
 
-  //Todo: Handle notification of reminder
-
   @override
   void initState() {
 
@@ -105,7 +103,7 @@ class _HomeLayoutTabletState extends State<HomeLayoutTablet> with TickerProvider
                         );
                       }
                       else {
-                        return Container();
+                        return Center(child: Text("Your List of Things is Empty", style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold),),);
                       }
                     }
                     else {
@@ -142,6 +140,7 @@ class _HomeLayoutTabletState extends State<HomeLayoutTablet> with TickerProvider
       else {
         available = false;
       }
+      print(1);
     }
     else if(date != null) { //Only Date is set (This Day Tab)
       temp = _dataManager.todosToday(date);
@@ -151,6 +150,17 @@ class _HomeLayoutTabletState extends State<HomeLayoutTablet> with TickerProvider
       else {
         available = false;
       }
+      print(2);
+    }
+    else if(status != null) {
+      temp = _dataManager.tasksWithStatus(status);
+      if((await temp).length > 0) {
+        _futureTodo = temp;
+      }
+      else {
+        available = false;
+      }
+      print(3);
     }
     else { // Default (All the Todos)
       _futureTodo = _dataManager.todos();
@@ -165,15 +175,8 @@ class _HomeLayoutTabletState extends State<HomeLayoutTablet> with TickerProvider
       title: Text(title),
       onTap: () async {
 
-        // To determine weather the active/completed
-        // was previously clicked
-        bool flag = false;
-
         // Title of the button
         _active = title;
-
-        // temporary result for status button selected/clicked
-        Future<List<Todo>> tempFuture;
 
         switch(title) {
 
@@ -189,21 +192,21 @@ class _HomeLayoutTabletState extends State<HomeLayoutTablet> with TickerProvider
 
             if(!identical(_currentTab, _active)) {
               _currentTab = title;
-              _populate(_date, 0);
+              await _populate(null, 0);
             }
             break;
 
           case "Completed":
             if(!identical(_currentTab, _active)) {
               _currentTab = title;
-              _populate(_date, 1);
+              await _populate(null, 1);
             }
             break;
 
           case "This Day":
             if(!identical(_currentTab, _active)) {
               _currentTab = title;
-              _populate(_date);
+              await _populate(_date);
             }
             break;
 

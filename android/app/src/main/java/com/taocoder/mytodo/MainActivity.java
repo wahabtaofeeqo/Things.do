@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.BatteryManager;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.SystemClock;
 
 import androidx.annotation.NonNull;
@@ -17,112 +18,103 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.flutter.Log;
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
+import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugins.GeneratedPluginRegistrant;
 
-public class MainActivity extends FlutterActivity {
+public class MainActivity extends FlutterActivity implements MethodChannel.MethodCallHandler {
 
   private static final String CHANNEL = "com.taocoder.todo/alarm";
-  public static final String CHANNEL_ID = "10001";
+  private static final String GREETCHANNEL = "com.taocoder.todo/greet";
+
   private static FlutterEngine engine;
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    new MethodChannel(getFlutterEngine().getDartExecutor().getBinaryMessenger(), GREETCHANNEL).setMethodCallHandler(this);
+    new MethodChannel(getFlutterEngine().getDartExecutor().getBinaryMessenger(), CHANNEL).setMethodCallHandler(this);
+  }
 
   @Override
   public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
     GeneratedPluginRegistrant.registerWith(flutterEngine);
-
     engine = flutterEngine;
-    new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL)
-    .setMethodCallHandler((call, result) -> {
-      if (call.method.equals("getBatteryLevel")) {
+  }
 
-        int batteryLevel = getBatteryLevel();
-        if (batteryLevel != -1) {
-          result.success(batteryLevel);
-        }
-        else {
-          result.error("UNAVAILABLE", "Battery Level not available", null);
-        }
-      }
-      else if(call.method.equals("createAlarm")) {
+  @Override
+  public void onMethodCall(MethodCall call, MethodChannel.Result result) {
 
-        // Get parameter
-        String params = (String) call.arguments;
-        String[] arr = params.split(" ");
+    switch (call.method) {
+      case "greet":
+        sayHi(result);
+        break;
 
-        // Date
-        int year = Integer.parseInt(arr[0]);
-        int month = Integer.parseInt(arr[1]);
-        int day = Integer.parseInt(arr[2]);
+      case "setReminder":
+        setReminder(call, result);
+        break;
 
-        // Time
-        int hour = Integer.parseInt(arr[3]);
-        int minute = Integer.parseInt(arr[4]);
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(year, month - 1, day, hour - 1, minute);
-
-        //setReminderDate(calendar.getTimeInMillis());
-
-
-        scheduleNotification(getNotification(), calendar.getTimeInMillis());
-        result.success(true);
-      }
-      else {
+      default:
         result.notImplemented();
-      }
-    });
-  }
-
-  private void setReminderDate(long delay) {
-    AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-    if (alarmManager != null) {
-
-      Intent intent = new Intent(this, AlarmReceiver.class);
-
     }
-  }
-
-
-  private int getBatteryLevel() {
-    int batterLevel = -1;
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-      BatteryManager batteryManager = (BatteryManager) getSystemService(BATTERY_SERVICE);
-      batterLevel = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
-    }
-    else {
-      Intent intent = new ContextWrapper(getApplicationContext()).registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-      batterLevel = (intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) * 100) /
-              intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
-
-    }
-    return  batterLevel;
-  }
-
-  private void scheduleNotification(Notification notification, long delay) {
-    Intent intent = new Intent(this, AlarmReceiver.class);
-    intent.putExtra(AlarmReceiver.NOTIFICATION, notification);
-    intent.putExtra(AlarmReceiver.NOTIFICATION_ID, 1);
-
-    PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-    AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-    assert  alarmManager != null;
-    alarmManager.set(AlarmManager.RTC_WAKEUP, delay, pendingIntent);
-  }
-
-  private Notification getNotification() {
-    NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "default");
-    builder.setContentTitle("Alarm");
-    builder.setContentText("Hello World!");
-    builder.setSmallIcon(R.drawable.ic_announcement);
-    builder.setAutoCancel(true);
-    builder.setChannelId(CHANNEL_ID);
-    return  builder.build();
   }
 
   public static void notifyFlutter() {
-    MethodChannel channel = new MethodChannel(engine.getDartExecutor(), CHANNEL);
-    channel.invokeMethod("taskToday", "Task");
+    MethodChannel channel = new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL);
+    channel.invokeMethod("taskToday", null);
+  }
+
+  private void sayHi(MethodChannel.Result result) {
+    Map<String, String> map = new HashMap<>();
+    map.put("greet", "This is still a beginning");
+    result.success(map);
+  }
+
+  private void setReminder(MethodCall call, MethodChannel.Result result) {
+
+    Object hashMap = (Object) call.arguments;
+    HashMap map = (HashMap) hashMap;
+
+    if (hashMap != null) {
+
+      Calendar  calendar = Calendar.getInstance();
+      String date = (String) map.get("date");
+      String time = (String) map.get("time");
+
+      String[] dArr = date.split("-");
+      String[] tArr = time.split(":");
+
+      int year = Integer.parseInt(dArr[0]);
+      int month = Integer.parseInt(dArr[1]);
+      int day = Integer.parseInt(dArr[2]);
+
+      int hour = Integer.parseInt(tArr[0]);
+      int minute = Integer.parseInt(tArr[1]);
+
+      calendar.set(year, month - 1, day, hour, minute);
+      createReminder(result, calendar.getTimeInMillis());
+    }
+    else {
+      result.error("Error", "This need parameter is not found", null);
+    }
+  }
+
+  private void createReminder(MethodChannel.Result result, long delay) {
+
+      Intent intent = new Intent(this, AlarmReceiver.class);
+
+      PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+      AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+      if (alarmManager != null) {
+          alarmManager.set(AlarmManager.RTC_WAKEUP, delay, pendingIntent);
+          result.success("created");
+      }
+      else {
+          result.success("error");
+      }
   }
 }

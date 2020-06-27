@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mytodo/layouts/moble/welcomeLayout.dart';
 import 'package:mytodo/layouts/tablet/welcome_layout_tablet.dart';
-import 'package:mytodo/session.dart';
+import 'package:mytodo/data/session.dart';
 
 
 class Welcome extends StatelessWidget {
@@ -17,11 +17,9 @@ class Welcome extends StatelessWidget {
     return Scaffold(
       body: OrientationBuilder(builder: (context, orientation) {
         if(MediaQuery.of(context).size.width > 600) {
-          print("Tablet");
           return WelcomeLayoutTablet();
         }
         else {
-          print("Mobile");
           return WelcomeLayout();
         }
       },),

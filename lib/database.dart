@@ -159,6 +159,16 @@ class DataManager {
     return list;
   }
 
+  Future<List<Todo>> tasksWithStatus(int status) async {
+    final db = await getDatabase;
+    var result = await db.query("todos", where: "status = ?", whereArgs: [status]);
+    var list = List.generate(result.length, (i) {
+      return Todo.fromMap(result.elementAt(i));
+    });
+
+    return list;
+  }
+
   deleteTask(int id) async {
     final db = await getDatabase;
     var result = await db.delete("todos", where: "id = ?", whereArgs: [id]);

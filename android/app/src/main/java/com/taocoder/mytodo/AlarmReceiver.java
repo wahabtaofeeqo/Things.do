@@ -16,20 +16,21 @@ public class AlarmReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        Notification notification = intent.getParcelableExtra(NOTIFICATION);
+//        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+//        Notification notification = intent.getParcelableExtra(NOTIFICATION);
+//
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//            int important = NotificationManager.IMPORTANCE_HIGH;
+//            NotificationChannel channel = new NotificationChannel(MainActivity.CHANNEL_ID, CHANNEL_NAME, important);
+//            assert notificationManager != null;
+//            notificationManager.createNotificationChannel(channel);
+//        }
+//
+//        int id = intent.getIntExtra(NOTIFICATION_ID, 0);
+//        assert notificationManager != null;
+//
+//        notificationManager.notify(id, notification);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            int important = NotificationManager.IMPORTANCE_HIGH;
-            NotificationChannel channel = new NotificationChannel(MainActivity.CHANNEL_ID, CHANNEL_NAME, important);
-            assert notificationManager != null;
-            notificationManager.createNotificationChannel(channel);
-        }
-
-        int id = intent.getIntExtra(NOTIFICATION_ID, 0);
-        assert notificationManager != null;
-
-        notificationManager.notify(id, notification);
-        //MainActivity.notifyFlutter();
+        MainActivity.notifyFlutter();
     }
 }

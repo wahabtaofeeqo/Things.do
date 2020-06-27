@@ -141,7 +141,6 @@ class _AddTaskWidgetState extends State<AddTaskWidget> with TickerProviderStateM
                   )
               );
             },
-
             markersBuilder: (context, date, events, holidays) {
               return <Widget>[];
             }
@@ -168,6 +167,7 @@ class _AddTaskWidgetState extends State<AddTaskWidget> with TickerProviderStateM
                   _title = val;
                   return (val.isEmpty) ? "Title?" : null;
                 },
+                onFieldSubmitted: (val) {},
               ),
             ),
 
@@ -182,17 +182,20 @@ class _AddTaskWidgetState extends State<AddTaskWidget> with TickerProviderStateM
                   _desc = val;
                   return (val.isEmpty) ? "Description?" : null;
                 },
+                onFieldSubmitted: (val) {},
               ),
             ),
 
             ListTile(
               title: Text("Time: ${_time.hourOfPeriod} : ${_time.minute}"),
               onTap: null,
-              trailing: IconButton(
-                icon: Icon(Icons.timer, color: Colors.deepOrange,),
+              trailing: FlatButton(
+                child: Text("Set Time", style: TextStyle(color: Colors.white),),
                 onPressed: () {
                   _pickTime();
                 },
+                color: Colors.black45,
+                autofocus: true,
               ),
             ),
 
@@ -233,6 +236,9 @@ class _AddTaskWidgetState extends State<AddTaskWidget> with TickerProviderStateM
                   if(_formKey.currentState.validate()) {
                     _onClickAddButton();
                   }
+                  else {
+                    Utils.showMessage("Required Field(s) is missing", context);
+                  }
                 },
               ),
             ),
@@ -248,22 +254,17 @@ class _AddTaskWidgetState extends State<AddTaskWidget> with TickerProviderStateM
     }
 
     if(_day != null) {
-      var date = Utils.getDate(_day);
-
       var todo = new Todo();
       todo.title = _title;
       todo.description = _desc;
-      todo.date = date;
+      todo.date = Utils.getDate(_day);
       todo.status = 0;
 
       await _dataManager.insert(todo);
-      print(_day);
-      print(_time);
-
-      _createAlarm(_day, _time);
-
-      print("Task Added");
-      Navigator.pop(context);
+      _createAlarm();
+    }
+    else {
+      Utils.showMessage("Pick Date for the Task", context);
     }
   }
 
@@ -276,14 +277,19 @@ class _AddTaskWidgetState extends State<AddTaskWidget> with TickerProviderStateM
     }
   }
 
-  _createAlarm(DateTime date, TimeOfDay time) async {
-    try {
-      String param = date.year.toString() + " " +
-          date.month.toString() + " " + date.day.toString() + " " +
-          time.hour.toString() + " " + time.minute.toString();
+  _createAlarm() async {
 
-      print(param);
-      platform.invokeMethod("createAlarm", param);
+    try {
+      String time = _time.hour.toString() + ":" + _time.minute.toString();
+
+      Map map = new HashMap();
+      map.putIfAbsent("date", () => Utils.getDate(_day));
+      map.putIfAbsent("time", () => time);
+
+      var res = await platform.invokeMethod("setReminder", map);
+      Utils.showMessage(res, context);
+
+      Navigator.pop(context);
     }
     on PlatformException catch(e) {
       print(e.message);

@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:mytodo/account.dart';
 import 'package:mytodo/consts.dart';
+import 'package:mytodo/data/firebase_records.dart';
 import 'package:mytodo/database.dart';
+import 'package:mytodo/layouts/login_screen.dart';
+import 'package:mytodo/register.dart';
 import 'package:mytodo/utils.dart';
 
 // EmailDialog Widget
@@ -146,8 +148,9 @@ class _EmailDialogWidgetState extends State<EmailDialogWidget> {
 
   _saveEmail(BuildContext context, String email) async {
 
-    bool res = await _dataManager.checkEmail(email);
-    if(res) {
+    var firebase = FirebaseRecords();
+    bool res = await firebase.emailExists(email);
+    if(!res) {
       Navigator.of(context).pop(); // Close the dialog
       Navigator.of(context).push(MaterialPageRoute<void>(
           builder: (BuildContext context) {
@@ -156,7 +159,11 @@ class _EmailDialogWidgetState extends State<EmailDialogWidget> {
       ));
     }
     else {
-      Utils.showMessage("The Email has already been used.", context);
+      Utils.showMessage("The Email has already been registered. Login", context);
+      Navigator.of(context).pop(); // Close the Dialog
+      Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (context) => LoginScreen(email)
+      ));
     }
   }
 }
